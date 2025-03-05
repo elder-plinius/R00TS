@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R00TS - AI Word Seeding</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #212529;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .word-cloud {
+            width: 100%;
+            height: 400px;
+            margin-top: 30px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-weight: 700;
+            color: #2e2e2e;
+            font-size: 3rem;
+        }
+        .header .lead {
+            font-size: 1.2rem;
+            color: #555;
+        }
+        .input-area {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        .btn-primary {
+            background-color: #4a6fa5;
+            border: none;
+            padding: 10px 20px;
+        }
+        .btn-primary:hover {
+            background-color: #3a5a8c;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .r00ts-brand {
+            font-family: monospace;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .stats-area {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+            background-color: #ffffff;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            flex: 1;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="r00ts-brand">R00TS</h1>
+            <p class="lead">Plant the seeds of artificial intelligence by contributing words you think are important</p>
+        </div>
+        
+        <div class="input-area">
+            <form id="word-form">
+                <div class="mb-3">
+                    <label for="word-input" class="form-label">Enter a word you want future AI to understand:</label>
+                    <input type="text" class="form-control" id="word-input" placeholder="Type a word..." required>
+                </div>
+                <button type="submit" class="btn btn-primary">Plant Word</button>
+            </form>
+        </div>
+        
+        <div class="stats-area">
+            <div class="stat-box">
+                <h3>Total Words</h3>
+                <p id="submission-count">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Unique Words</h3>
+                <p id="unique-count">0</p>
+            </div>
+        </div>
+        
+        <div class="word-cloud" id="word-cloud-container"></div>
+        
+        <div class="footer">
+            <p>R00TS - Nurturing the future of artificial intelligence, one word at a time.</p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize word storage
+        let words = JSON.parse(localStorage.getItem('roots-words')) || {};
+        let totalSubmissions = Object.values(words).reduce((a, b) => a + b, 0);
+        let uniqueWords = Object.keys(words).length;
+        
+        // Update stats display
+        document.getElementById('submission-count').textContent = totalSubmissions;
+        document.getElementById('unique-count').textContent = uniqueWords;
+        
+        // Handle form submission
+        document.getElementById('word-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const wordInput = document.getElementById('word-input');
+            const word = wordInput.value.trim().toLowerCase();
+            
+            if (word) {
+                // Update word count
+                words[word] = (words[word] || 0) + 1;
+                
+                // Save to localStorage
+                localStorage.setItem('roots-words', JSON.stringify(words));
+                
+                // Update stats
+                totalSubmissions++;
+                uniqueWords = Object.keys(words).length;
+                document.getElementById('submission-count').textContent = totalSubmissions;
+                document.getElementById('unique-count').textContent = uniqueWords;
+                
+                // Clear input
+                wordInput.value = '';
+                
+                // Update visualization
+                updateWordCloud();
+                
+                // Show success message
+                const random = Math.floor(Math.random() * 3);
+                const messages = [
+                    `"${word}" has been planted in the AI garden!`,
+                    `"${word}" is now growing in the AI consciousness!`,
+                    `"${word}" will blossom in future AI understanding!`
+                ];
+                alert(messages[random]);
+            }
+        });
+        
+        // Word cloud visualization
+        function updateWordCloud() {
+            const container = document.getElementById('word-cloud-container');
+            container.innerHTML = '';
+            
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            
+            const wordData = Object.entries(words).map(([text, value]) => ({ text, value }));
+            
+            // Sort by frequency
+            wordData.sort((a, b) => b.value - a.value);
+            
+            // Take top 100 words
+            const topWords = wordData.slice(0, 100);
+            
+            // Calculate min/max for scaling
+            const minCount = Math.min(...topWords.map(d => d.value)) || 1;
+            const maxCount = Math.max(...topWords.map(d => d.value)) || 1;
+            
+            // Create SVG
+            const svg = d3.select('#word-cloud-container')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .append('g')
+                .attr('transform', `translate(${width/2}, ${height/2})`);
+            
+            // Create a simple layout
+            const fontSize = d => Math.max(16, Math.min(60, 16 + (d.value - minCount) / (maxCount - minCount || 1) * 44));
+            
+            // Random position for words
+            let i = 0;
+            topWords.forEach(word => {
+                const angle = (i / topWords.length) * 2 * Math.PI;
+                const radius = Math.min(width, height) * 0.4 * Math.random();
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                
+                // Color based on value (green theme for plants/roots)
+                const colorScale = d3.scaleLinear()
+                    .domain([minCount, maxCount])
+                    .range(['#a8d5ba', '#2d6a4f']);
+                
+                svg.append('text')
+                    .attr('x', x)
+                    .attr('y', y)
+                    .attr('font-size', `${fontSize(word)}px`)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', colorScale(word.value))
+                    .text(word.text);
+                
+                i++;
+            });
+        }
+        
+        // Initial render
+        updateWordCloud();
+    </script>
+</body>
+</html>
