@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R00TS - Dataset Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@300;400;600&display=swap');
+
+        :root {
+            --primary-color: #00ff9d;
+            --secondary-color: #004d2c;
+            --accent-color: #39ff14;
+            --bg-color: #0a0f15;
+            --text-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--primary-color);
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+        }
+
+        .datasets-container {
+            background: rgba(0, 20, 10, 0.4);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 255, 157, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+
+        .dataset-item {
+            background: rgba(0, 20, 10, 0.6);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .dataset-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 255, 157, 0.1);
+        }
+
+        .dataset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .dataset-name {
+            color: var(--primary-color);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .dataset-time {
+            color: var(--text-color);
+            opacity: 0.5;
+            font-size: 0.9rem;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .dataset-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(0, 255, 157, 0.1);
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .stat-label {
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(57, 255, 20, 0.3);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .back-link {
+            display: inline-block;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-bottom: 20px;
+            font-family: 'Share Tech Mono', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: var(--accent-color);
+            transform: translateX(-5px);
+        }
+
+        #datasetStats {
+            background: rgba(0, 20, 10, 0.4);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+        }
+
+        .total-stat {
+            color: var(--primary-color);
+            font-size: 2rem;
+            font-family: 'Share Tech Mono', monospace;
+            margin: 0;
+        }
+
+        .stat-description {
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Back to Garden</a>
+        
+        <div class="header">
+            <h1>R00TS Dataset Manager</h1>
+        </div>
+
+        <div id="datasetStats">
+            <!-- Overall stats will be inserted here -->
+        </div>
+
+        <div class="datasets-container">
+            <div id="dataset-list">
+                <!-- Dataset items will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const datasets = JSON.parse(localStorage.getItem('roots-datasets') || '[]');
+            const currentWords = JSON.parse(localStorage.getItem('roots-words') || '{}');
+            
+            // Update overall stats
+            const totalDatasets = datasets.length;
+            const latestDataset = datasets[datasets.length - 1] || { wordCount: 0, totalSubmissions: 0 };
+            
+            document.getElementById('datasetStats').innerHTML = `
+                <div>
+                    <p class="total-stat">${totalDatasets}</p>
+                    <p class="stat-description">Total Snapshots</p>
+                </div>
+                <div>
+                    <p class="total-stat">${latestDataset.wordCount}</p>
+                    <p class="stat-description">Unique Words</p>
+                </div>
+                <div>
+                    <p class="total-stat">${latestDataset.totalSubmissions}</p>
+                    <p class="stat-description">Total Submissions</p>
+                </div>
+            `;
+
+            // Display datasets
+            const datasetList = document.getElementById('dataset-list');
+            datasetList.innerHTML = datasets.reverse().map(dataset => `
+                <div class="dataset-item">
+                    <div class="dataset-header">
+                        <h3 class="dataset-name">${dataset.filename}</h3>
+                        <div class="actions">
+                            <button class="btn btn-primary btn-sm" onclick="downloadDataset('${dataset.filename}')">
+                                Download
+                            </button>
+                            <button class="btn btn-primary btn-sm" onclick="viewDataset('${dataset.filename}')">
+                                View
+                            </button>
+                        </div>
+                    </div>
+                    <div class="dataset-time">
+                        Created: ${new Date(dataset.timestamp).toLocaleString()}
+                    </div>
+                    <div class="dataset-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Unique Words</div>
+                            <div class="stat-value">${dataset.wordCount}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Total Submissions</div>
+                            <div class="stat-value">${dataset.totalSubmissions}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        });
+
+        function downloadDataset(filename) {
+            const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
+            const dataBlob = new Blob([JSON.stringify(words, null, 2)], { type: 'application/json' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        function viewDataset(filename) {
+            const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
+            const formattedData = JSON.stringify(words, null, 2);
+            const win = window.open('', '_blank');
+            win.document.write(`
+                <html>
+                <head>
+                    <title>${filename}</title>
+                    <style>
+                        body {
+                            background: #1e1e1e;
+                            color: #00ff9d;
+                            font-family: monospace;
+                            padding: 20px;
+                            margin: 0;
+                        }
+                        pre {
+                            white-space: pre-wrap;
+                            word-wrap: break-word;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <pre>${formattedData}</pre>
+                </body>
+                </html>
+            `);
+        }
+    </script>
+</body>
+</html>

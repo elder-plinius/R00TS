@@ -1,0 +1,178 @@
+/* R00TS - Core Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+    color: #212529;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header Styles */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+}
+
+.header h1 {
+    font-weight: 700;
+    color: #2e2e2e;
+    margin-bottom: 10px;
+    font-size: 3rem;
+}
+
+.r00ts-brand {
+    font-family: monospace;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.header .lead {
+    color: #555;
+    font-size: 1.2rem;
+}
+
+/* Input Area Styles */
+.input-area {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+
+.input-area label {
+    font-weight: 600;
+    color: #495057;
+}
+
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Word Cloud Styles */
+.word-cloud {
+    width: 100%;
+    height: 400px;
+    margin-top: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.word-item {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+/* Statistics Styles */
+.stats-area {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.stat-box {
+    text-align: center;
+    padding: 10px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex: 1;
+    margin: 0 10px;
+}
+
+.stat-box h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #6c757d;
+}
+
+.stat-box p {
+    margin: 5px 0 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4a6fa5;
+}
+
+/* Footer Styles */
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    padding: 20px 0;
+    color: #6c757d;
+    font-size: 0.9rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Button Styles */
+.btn-primary {
+    background-color: #4a6fa5;
+    border: none;
+    padding: 10px 20px;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background-color: #3a5a8c;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .word-cloud {
+        height: 300px;
+    }
+    
+    .stats-area {
+        flex-direction: column;
+    }
+    
+    .stat-box {
+        margin: 5px 0;
+    }
+    
+    .header h1 {
+        font-size: 2.5rem;
+    }
+}
+
+/* Share button */
+.share-btn {
+    display: inline-block;
+    background-color: #4a6fa5;
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 8px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.share-btn:hover {
+    background-color: #3a5a8c;
+}
+
+/* Animation for word addition */
+@keyframes grow {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.word-added {
+    animation: grow 0.5s ease-out;
+}

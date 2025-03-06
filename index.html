@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R00TS - AI Word Seeding</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="data_manager.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/particles.js/2.0.0/particles.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.0/gsap.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Space+Grotesk:wght@300;400;600&display=swap');
+
+        :root {
+            --primary-color: #00ff9d;
+            --secondary-color: #004d2c;
+            --accent-color: #39ff14;
+            --bg-color: #0a0f15;
+            --text-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .word-cloud {
+            width: 100%;
+            height: 600px;
+            margin-top: 30px;
+            background: rgba(0, 20, 10, 0.4);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 255, 157, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .word-cloud:hover {
+            box-shadow: 0 8px 32px rgba(0, 255, 157, 0.2);
+            transform: translateY(-2px);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 4.5rem;
+            text-shadow: 0 0 10px rgba(0, 255, 157, 0.5);
+            letter-spacing: 4px;
+            margin-bottom: 1rem;
+        }
+
+        .header .lead {
+            font-size: 1.4rem;
+            color: var(--text-color);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .input-area {
+            background: rgba(0, 20, 10, 0.4);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 255, 157, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .input-area:hover {
+            box-shadow: 0 8px 32px rgba(0, 255, 157, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .form-control {
+            background: rgba(0, 20, 10, 0.4);
+            border: 1px solid rgba(0, 255, 157, 0.2);
+            color: var(--text-color);
+            padding: 15px;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            background: rgba(0, 20, 10, 0.6);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(0, 255, 157, 0.25);
+            color: var(--text-color);
+        }
+
+        .form-label {
+            color: var(--text-color);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+        .btn-primary {
+            background: var(--primary-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(57, 255, 20, 0.3);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            color: var(--text-color);
+            font-size: 1rem;
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+
+        .footer:hover {
+            opacity: 1;
+        }
+        .r00ts-brand {
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: bold;
+            letter-spacing: 2px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .r00ts-brand::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--primary-color);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease;
+        }
+
+        .r00ts-brand:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+        .stats-area {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            gap: 20px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 25px;
+            background: rgba(0, 20, 10, 0.4);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 255, 157, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+            flex: 1;
+            transition: all 0.3s ease;
+        }
+
+        .stat-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 255, 157, 0.2);
+        }
+
+        .stat-box h3 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .stat-box p {
+            color: var(--text-color);
+            font-size: 2rem;
+            font-weight: 600;
+            margin: 0;
+            text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+        }
+
+        /* Dataset styles */
+        .datasets-section {
+            margin-top: 40px;
+            background: rgba(0, 20, 10, 0.4);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 255, 157, 0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(0, 255, 157, 0.1);
+        }
+
+        .datasets-section h3 {
+            color: var(--primary-color);
+            font-family: 'Share Tech Mono', monospace;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+
+        .dataset-item {
+            background: rgba(0, 20, 10, 0.6);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .dataset-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 255, 157, 0.1);
+        }
+
+        .dataset-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .dataset-name {
+            color: var(--primary-color);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+        }
+
+        .dataset-stats {
+            color: var(--text-color);
+            opacity: 0.7;
+            font-size: 0.8rem;
+        }
+
+        .dataset-time {
+            color: var(--text-color);
+            opacity: 0.5;
+            font-size: 0.8rem;
+            font-family: 'Share Tech Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div id="particles-js"></div>
+    <div class="container">
+        <div class="header">
+            <h1 class="r00ts-brand">R00TS</h1>
+            <p class="lead">Plant the seeds of artificial intelligence by contributing words you think are important</p>
+        </div>
+        
+        <div class="input-area">
+            <form id="word-form">
+                <div class="mb-3">
+                    <label for="word-input" class="form-label">Enter a word to give it power:</label>
+                    <input type="text" class="form-control" id="word-input" placeholder="Type a word..." required>
+                </div>
+                <button type="submit" class="btn btn-primary">Plant Word</button>
+            </form>
+        </div>
+        
+        <div class="stats-area">
+            <div class="stat-box">
+                <h3>Total Words</h3>
+                <p id="submission-count">0</p>
+            </div>
+            <div class="stat-box">
+                <h3>Unique Words</h3>
+                <p id="unique-count">0</p>
+            </div>
+        </div>
+        
+        <div class="word-cloud" id="word-cloud-container"></div>
+        
+        <div class="datasets-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Recent Datasets</h3>
+                <a href="datasets.html" class="btn btn-primary btn-sm">View All Datasets</a>
+            </div>
+            <div id="dataset-list">
+                <!-- Dataset items will be inserted here -->
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>R00TS - Nurturing the future of artificial intelligence, one word at a time.</p>
+        </div>
+    </div>
+
+    <script>
+        // Initialize word storage
+        let words = JSON.parse(localStorage.getItem('roots-words')) || {};
+        let totalSubmissions = Object.values(words).reduce((a, b) => a + b, 0);
+        let uniqueWords = Object.keys(words).length;
+        
+        // Update stats display
+        document.getElementById('submission-count').textContent = totalSubmissions;
+        document.getElementById('unique-count').textContent = uniqueWords;
+        
+        // Handle form submission
+        document.getElementById('word-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const wordInput = document.getElementById('word-input');
+            const word = wordInput.value.trim().toLowerCase();
+            
+            if (word) {
+                // Update word count
+                words[word] = (words[word] || 0) + 1;
+                
+                // Save to localStorage
+                localStorage.setItem('roots-words', JSON.stringify(words));
+                
+                // Update stats
+                totalSubmissions++;
+                uniqueWords = Object.keys(words).length;
+                document.getElementById('submission-count').textContent = totalSubmissions;
+                document.getElementById('unique-count').textContent = uniqueWords;
+                
+                // Clear input
+                wordInput.value = '';
+                
+                // Update visualization
+                updateWordCloud();
+                
+                // Show success message
+                const random = Math.floor(Math.random() * 3);
+                const messages = [
+                    `"${word}" has been planted in the AI garden!`,
+                    `"${word}" is now growing in the AI consciousness!`,
+                    `"${word}" will blossom in future AI understanding!`
+                ];
+                alert(messages[random]);
+            }
+        });
+        
+        // Word cloud visualization
+        function updateWordCloud() {
+            const container = document.getElementById('word-cloud-container');
+            container.innerHTML = '';
+            
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+            
+            const wordData = Object.entries(words).map(([text, value]) => ({ text, value }));
+            
+            // Sort by frequency
+            wordData.sort((a, b) => b.value - a.value);
+            
+            // Take top 100 words
+            const topWords = wordData.slice(0, 100);
+            
+            // Calculate min/max for scaling
+            const minCount = Math.min(...topWords.map(d => d.value)) || 1;
+            const maxCount = Math.max(...topWords.map(d => d.value)) || 1;
+            
+            // Create SVG
+            const svg = d3.select('#word-cloud-container')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height)
+                .append('g')
+                .attr('transform', `translate(${width/2}, ${height/2})`);
+            
+            // Create a simple layout
+            const fontSize = d => Math.max(16, Math.min(60, 16 + (d.value - minCount) / (maxCount - minCount || 1) * 44));
+            
+            // Random position for words
+            let i = 0;
+            topWords.forEach(word => {
+                const angle = (i / topWords.length) * 2 * Math.PI;
+                const radius = Math.min(width, height) * 0.4 * Math.random();
+                const x = radius * Math.cos(angle);
+                const y = radius * Math.sin(angle);
+                
+                // Color based on value (green theme for plants/roots)
+                const colorScale = d3.scaleLinear()
+                    .domain([minCount, maxCount])
+                    .range(['#a8d5ba', '#2d6a4f']);
+                
+                svg.append('text')
+                    .attr('x', x)
+                    .attr('y', y)
+                    .attr('font-size', `${fontSize(word)}px`)
+                    .attr('text-anchor', 'middle')
+                    .attr('fill', colorScale(word.value))
+                    .text(word.text);
+                
+                i++;
+            });
+        }
+        
+        // Initial render
+        updateWordCloud();
+    </script>
+</body>
+</html>
