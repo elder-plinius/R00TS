@@ -6,7 +6,7 @@ R00TS is an interactive web application that allows users to contribute words th
 
 The concept behind R00TS is to create a collective "garden" of words that people from around the world can contribute to - essentially "planting seeds" of vocabulary that will grow in the consciousness of future AI systems.
 
-While the current implementation uses client-side storage for demonstration purposes, the concept could be expanded to a global database where everyone's contributions help shape a collective understanding of what words humans believe are important for AI to comprehend.
+The application now features a production-ready backend with MongoDB for data persistence, allowing for global collection of contributions and scaling to handle large volumes of data.
 
 ## Features
 
@@ -25,29 +25,48 @@ While the current implementation uses client-side storage for demonstration purp
 
 ## Technical Implementation
 
-- Pure HTML, CSS, and JavaScript
+- Frontend: HTML, CSS, and JavaScript
+- Backend: Node.js with Express and MongoDB
 - Uses D3.js for the word cloud visualization
 - Bootstrap for responsive styling
-- No backend required (uses client-side storage for demonstration)
+- RESTful API for data operations
+- Graceful fallback to localStorage if the server is unavailable
 
 ## Running Locally
 
-Simply open `index.html` in a web browser. No server required.
+### Frontend Only (Demo Mode)
+
+Simply open `index.html` in a web browser. This will use localStorage for data storage.
+
+### Full Stack (Production Mode)
+
+1. Install MongoDB locally or set up a MongoDB Atlas account
+2. Navigate to the server directory: `cd server`
+3. Install dependencies: `npm install`
+4. Configure your environment variables in `.env` file
+5. Start the server: `npm start`
+6. Open `index.html` in a web browser or serve it with a static file server
 
 ## Future Enhancements
 
-- Server-side storage for global word collection
 - User accounts to track individual contributions
 - Regional visualizations to see how word importance varies by culture
 - Sentiment analysis of submitted words
 - Category tagging for submitted words
+- Advanced analytics and reporting
+- Enhanced data visualization options
 - Social sharing functionality
 
 ## Repository Structure
 
-- `/SYSTEM PROMPTS` - Collection of AI system prompts for reference
+- `/server` - Backend server code
+  - `/models` - MongoDB data models
+  - `/routes` - API route definitions
+  - `server.js` - Main server file
 - `index.html` - Main application page
-- `script.js` - JavaScript functionality
+- `datasets.html` - Dataset management page
+- `script.js` - Core JavaScript functionality
+- `data_manager.js` - Data management functionality
 - `styles.css` - CSS styling
 - `README.md` - This documentation file
 

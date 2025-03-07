@@ -194,14 +194,49 @@
         </div>
     </div>
 
+    <script src="data_manager.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const datasets = JSON.parse(localStorage.getItem('roots-datasets') || '[]');
-            const currentWords = JSON.parse(localStorage.getItem('roots-words') || '{}');
+        const apiBaseUrl = '/api';
+        
+        async function fetchDatasets() {
+            try {
+                const response = await fetch(`${apiBaseUrl}/datasets`);
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching datasets:', error);
+                // Fallback to localStorage
+                return JSON.parse(localStorage.getItem('roots-datasets') || '[]');
+            }
+        }
+        
+        async function fetchStats() {
+            try {
+                const response = await fetch(`${apiBaseUrl}/words/stats`);
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching stats:', error);
+                // Fallback to localStorage
+                const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
+                return {
+                    uniqueWords: Object.keys(words).length,
+                    totalSubmissions: Object.values(words).reduce((a, b) => a + b, 0)
+                };
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Fetch datasets and stats
+            const datasets = await fetchDatasets();
+            const stats = await fetchStats();
             
             // Update overall stats
             const totalDatasets = datasets.length;
-            const latestDataset = datasets[datasets.length - 1] || { wordCount: 0, totalSubmissions: 0 };
             
             document.getElementById('datasetStats').innerHTML = `
                 <div>
@@ -209,18 +244,18 @@
                     <p class="stat-description">Total Snapshots</p>
                 </div>
                 <div>
-                    <p class="total-stat">${latestDataset.wordCount}</p>
+                    <p class="total-stat">${stats.uniqueWords}</p>
                     <p class="stat-description">Unique Words</p>
                 </div>
                 <div>
-                    <p class="total-stat">${latestDataset.totalSubmissions}</p>
+                    <p class="total-stat">${stats.totalSubmissions}</p>
                     <p class="stat-description">Total Submissions</p>
                 </div>
             `;
 
             // Display datasets
             const datasetList = document.getElementById('dataset-list');
-            datasetList.innerHTML = datasets.reverse().map(dataset => `
+            datasetList.innerHTML = datasets.map(dataset => `
                 <div class="dataset-item">
                     <div class="dataset-header">
                         <h3 class="dataset-name">${dataset.filename}</h3>
@@ -250,45 +285,104 @@
             `).join('');
         });
 
-        function downloadDataset(filename) {
-            const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
-            const dataBlob = new Blob([JSON.stringify(words, null, 2)], { type: 'application/json' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(link.href);
+        async function downloadDataset(filename) {
+            try {
+                const response = await fetch(`${apiBaseUrl}/datasets/${filename}`);
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const dataset = await response.json();
+                const dataBlob = new Blob([JSON.stringify(dataset.data, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            } catch (error) {
+                console.error('Error downloading dataset:', error);
+                alert('Error downloading dataset. Please try again later.');
+                
+                // Fallback to localStorage if API fails
+                const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
+                const dataBlob = new Blob([JSON.stringify(words, null, 2)], { type: 'application/json' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            }
         }
 
-        function viewDataset(filename) {
-            const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
-            const formattedData = JSON.stringify(words, null, 2);
-            const win = window.open('', '_blank');
-            win.document.write(`
-                <html>
-                <head>
-                    <title>${filename}</title>
-                    <style>
-                        body {
-                            background: #1e1e1e;
-                            color: #00ff9d;
-                            font-family: monospace;
-                            padding: 20px;
-                            margin: 0;
-                        }
-                        pre {
-                            white-space: pre-wrap;
-                            word-wrap: break-word;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <pre>${formattedData}</pre>
-                </body>
-                </html>
-            `);
+        async function viewDataset(filename) {
+            try {
+                const response = await fetch(`${apiBaseUrl}/datasets/${filename}`);
+                if (!response.ok) {
+                    throw new Error(`API error: ${response.status}`);
+                }
+                
+                const dataset = await response.json();
+                const formattedData = JSON.stringify(dataset.data, null, 2);
+                const win = window.open('', '_blank');
+                win.document.write(`
+                    <html>
+                    <head>
+                        <title>${filename}</title>
+                        <style>
+                            body {
+                                background: #1e1e1e;
+                                color: #00ff9d;
+                                font-family: monospace;
+                                padding: 20px;
+                                margin: 0;
+                            }
+                            pre {
+                                white-space: pre-wrap;
+                                word-wrap: break-word;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <pre>${formattedData}</pre>
+                    </body>
+                    </html>
+                `);
+            } catch (error) {
+                console.error('Error viewing dataset:', error);
+                alert('Error viewing dataset. Please try again later.');
+                
+                // Fallback to localStorage if API fails
+                const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
+                const formattedData = JSON.stringify(words, null, 2);
+                const win = window.open('', '_blank');
+                win.document.write(`
+                    <html>
+                    <head>
+                        <title>${filename}</title>
+                        <style>
+                            body {
+                                background: #1e1e1e;
+                                color: #00ff9d;
+                                font-family: monospace;
+                                padding: 20px;
+                                margin: 0;
+                            }
+                            pre {
+                                white-space: pre-wrap;
+                                word-wrap: break-word;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <pre>${formattedData}</pre>
+                    </body>
+                    </html>
+                `);
+            }
         }
     </script>
 </body>

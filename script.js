@@ -87,16 +87,23 @@ function initParticles() {
     });
 }
 
-function loadWords() {
-    // In a real implementation, this would be an API call
-    // For demo purposes, we're using localStorage
-    let words = JSON.parse(localStorage.getItem('roots-words')) || {};
-    
-    // Update the visualization
-    updateWordCloud(words);
-    
-    // Update statistics
-    updateStats(words);
+async function loadWords() {
+    try {
+        // Use the data manager to get words from API
+        let words = await window.dataManager.getCurrentWords();
+        
+        // Update the visualization
+        updateWordCloud(words);
+        
+        // Update statistics
+        updateStats(words);
+    } catch (error) {
+        console.error('Error loading words:', error);
+        // Fallback to localStorage if API fails
+        let words = JSON.parse(localStorage.getItem('roots-words')) || {};
+        updateWordCloud(words);
+        updateStats(words);
+    }
 }
 
 function updateStats(words) {
@@ -107,30 +114,43 @@ function updateStats(words) {
     document.getElementById('unique-count').textContent = uniqueWords;
 }
 
-function submitWord(word) {
+async function submitWord(word) {
     word = word.trim().toLowerCase();
     
     if (!word) return false;
     
     // Create a particle burst effect
-    createParticleBurst();
+    if (typeof createParticleBurst === 'function') {
+        createParticleBurst();
+    }
     
-    // For demo purposes, we're using localStorage
-    let words = JSON.parse(localStorage.getItem('roots-words')) || {};
-    words[word] = (words[word] || 0) + 1;
-    localStorage.setItem('roots-words', JSON.stringify(words));
-    
-    // Update UI with animation
-    gsap.to('.stat-box', {
-        scale: 1.1,
-        duration: 0.2,
-        yoyo: true,
-        repeat: 1,
-        ease: 'power2.out'
-    });
-    
-    loadWords();
-    return true;
+    try {
+        // Use the data manager to add word via API
+        await window.dataManager.addWord(word);
+        
+        // Update UI with animation if GSAP is available
+        if (typeof gsap !== 'undefined') {
+            gsap.to('.stat-box', {
+                scale: 1.1,
+                duration: 0.2,
+                yoyo: true,
+                repeat: 1,
+                ease: 'power2.out'
+            });
+        }
+        
+        loadWords();
+        return true;
+    } catch (error) {
+        console.error('Error submitting word:', error);
+        // Fallback to localStorage if API fails
+        let words = JSON.parse(localStorage.getItem('roots-words')) || {};
+        words[word] = (words[word] || 0) + 1;
+        localStorage.setItem('roots-words', JSON.stringify(words));
+        
+        loadWords();
+        return true;
+    }
 }
 
 function createParticleBurst() {
@@ -175,6 +195,7 @@ function createParticleBurst() {
             }
         );
     }
+
 }
 
 function updateWordCloud(words) {
@@ -195,6 +216,10 @@ function updateWordCloud(words) {
     const topWords = wordData.slice(0, 100);
     
     if (topWords.length === 0) {
+<<<<<<< HEAD
+=======
+        // Show placeholder if no words
+>>>>>>> 6fcedc69cfea5193a6809e1f2fb705b42479c5bd
         container.innerHTML = '<div class="d-flex justify-content-center align-items-center h-100"><p class="text-muted">Plant some words to see them grow here!</p></div>';
         return;
     }
@@ -209,6 +234,7 @@ function updateWordCloud(words) {
         .attr('width', width)
         .attr('height', height)
         .append('g')
+<<<<<<< HEAD
         .attr('transform', `translate(${width/2}, ${height * 0.8})`);
     
     // Create tree trunk
@@ -304,7 +330,6 @@ function updateWordCloud(words) {
             .attr('text-anchor', 'middle')
             .attr('alignment-baseline', 'middle');
     });
-}
 }
 
 // Function to share words

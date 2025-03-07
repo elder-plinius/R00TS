@@ -2,55 +2,97 @@
 class DataManager {
     constructor(backupInterval = 1800000) { // Default: 30 minutes
         this.backupInterval = backupInterval;
-        this.dataDir = 'datasets';
-        this.initializeDataDirectory();
+        this.apiBaseUrl = '/api';
         this.startAutoBackup();
     }
 
-    async initializeDataDirectory() {
+    async getCurrentWords() {
         try {
-            const response = await fetch(`/${this.dataDir}`);
-            if (response.status === 404) {
-                console.log('Creating datasets directory...');
-                // Directory will be created on first backup
+            const response = await fetch(`${this.apiBaseUrl}/words`);
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
             }
+            return await response.json();
         } catch (error) {
-            console.log('Will create datasets directory on first backup');
+            console.error('Error fetching words:', error);
+            // Fallback to localStorage if API fails
+            return JSON.parse(localStorage.getItem('roots-words') || '{}');
         }
     }
 
-    getCurrentWords() {
-        return JSON.parse(localStorage.getItem('roots-words')) || {};
+    async addWord(word) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/words`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ word })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error adding word:', error);
+            // Fallback to localStorage if API fails
+            const words = JSON.parse(localStorage.getItem('roots-words') || '{}');
+            words[word] = (words[word] || 0) + 1;
+            localStorage.setItem('roots-words', JSON.stringify(words));
+            return { word, count: words[word] };
+        }
     }
 
     async saveDataset() {
-        const currentData = this.getCurrentWords();
-        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-        const filename = `roots_dataset_${timestamp}.json`;
-        
-        const dataBlob = new Blob(
-            [JSON.stringify(currentData, null, 2)], 
-            { type: 'application/json' }
-        );
-        
-        // Create download link
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(dataBlob);
-        link.download = filename;
-        
-        // Trigger download
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        
-        // Clean up
-        URL.revokeObjectURL(link.href);
-        
-        console.log(`Dataset saved: ${filename}`);
-        this.updateDatasetList(filename, currentData);
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/datasets`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            const dataset = await response.json();
+            console.log(`Dataset saved: ${dataset.filename}`);
+            this.updateDatasetDisplay();
+            return dataset;
+        } catch (error) {
+            console.error('Error saving dataset:', error);
+            // Fallback to the old method if API fails
+            const currentData = await this.getCurrentWords();
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const filename = `roots_dataset_${timestamp}.json`;
+            
+            const dataBlob = new Blob(
+                [JSON.stringify(currentData, null, 2)], 
+                { type: 'application/json' }
+            );
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = filename;
+            
+            // Trigger download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up
+            URL.revokeObjectURL(link.href);
+            
+            console.log(`Dataset saved locally: ${filename}`);
+            this.updateLocalDatasetList(filename, currentData);
+        }
     }
 
-    updateDatasetList(filename, data) {
+    updateLocalDatasetList(filename, data) {
         const datasets = JSON.parse(localStorage.getItem('roots-datasets') || '[]');
         datasets.push({
             filename,
@@ -68,25 +110,50 @@ class DataManager {
         this.updateDatasetDisplay();
     }
 
-    updateDatasetDisplay() {
+    async updateDatasetDisplay() {
         const datasetList = document.getElementById('dataset-list');
         if (!datasetList) return;
 
-        const datasets = JSON.parse(localStorage.getItem('roots-datasets') || '[]');
-        datasetList.innerHTML = datasets.reverse().slice(0, 5).map(dataset => `
-            <div class="dataset-item">
-                <div class="dataset-info">
-                    <span class="dataset-name">${dataset.filename}</span>
-                    <span class="dataset-stats">
-                        Words: ${dataset.wordCount} | 
-                        Submissions: ${dataset.totalSubmissions}
-                    </span>
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/datasets/recent/list`);
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+            
+            const datasets = await response.json();
+            datasetList.innerHTML = datasets.slice(0, 5).map(dataset => `
+                <div class="dataset-item">
+                    <div class="dataset-info">
+                        <span class="dataset-name">${dataset.filename}</span>
+                        <span class="dataset-stats">
+                            Words: ${dataset.wordCount} | 
+                            Submissions: ${dataset.totalSubmissions}
+                        </span>
+                    </div>
+                    <div class="dataset-time">
+                        ${new Date(dataset.timestamp).toLocaleString()}
+                    </div>
                 </div>
-                <div class="dataset-time">
-                    ${new Date(dataset.timestamp).toLocaleString()}
+            `).join('');
+        } catch (error) {
+            console.error('Error fetching datasets:', error);
+            // Fallback to localStorage
+            const datasets = JSON.parse(localStorage.getItem('roots-datasets') || '[]');
+            datasetList.innerHTML = datasets.reverse().slice(0, 5).map(dataset => `
+                <div class="dataset-item">
+                    <div class="dataset-info">
+                        <span class="dataset-name">${dataset.filename}</span>
+                        <span class="dataset-stats">
+                            Words: ${dataset.wordCount} | 
+                            Submissions: ${dataset.totalSubmissions}
+                        </span>
+                    </div>
+                    <div class="dataset-time">
+                        ${new Date(dataset.timestamp).toLocaleString()}
+                    </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
+        }
     }
 
     startAutoBackup() {
@@ -101,4 +168,5 @@ class DataManager {
 // Initialize data manager when document is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.dataManager = new DataManager();
+    console.log('R00TS Data Manager initialized with production-ready backend');
 });
