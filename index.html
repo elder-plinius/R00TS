@@ -178,44 +178,6 @@
             transform: scaleX(1);
             transform-origin: left;
         }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .header h1 {
-            font-weight: 700;
-            color: #2e2e2e;
-            font-size: 3rem;
-        }
-        .header .lead {
-            font-size: 1.2rem;
-            color: #555;
-        }
-        .input-area {
-            background-color: #ffffff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 30px;
-        }
-        .btn-primary {
-            background-color: #4a6fa5;
-            border: none;
-            padding: 10px 20px;
-        }
-        .btn-primary:hover {
-            background-color: #3a5a8c;
-        }
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            color: #6c757d;
-            font-size: 0.9rem;
-        }
-        .r00ts-brand {
-            font-family: monospace;
-            font-weight: bold;
-            letter-spacing: 1px;
         }
         .stats-area {
             display: flex;
@@ -362,7 +324,128 @@
         </div>
     </div>
 
+    <script src="script.js"></script>
     <script>
+        // Add toast notification styles
+        const toastStyle = document.createElement('style');
+        toastStyle.textContent = `
+            .toast-notification {
+                position: fixed;
+                bottom: 30px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 255, 157, 0.2);
+                color: var(--primary-color);
+                padding: 15px 30px;
+                border-radius: 10px;
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(0, 255, 157, 0.3);
+                box-shadow: 0 8px 32px rgba(0, 255, 157, 0.2);
+                z-index: 1000;
+                font-family: 'Share Tech Mono', monospace;
+                text-align: center;
+                font-weight: bold;
+            }
+            
+            .typing-effect {
+                border-right: 2px solid var(--primary-color);
+                white-space: nowrap;
+                overflow: hidden;
+                animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+            }
+            
+            @keyframes typing {
+                from { width: 0 }
+                to { width: 100% }
+            }
+            
+            @keyframes blink-caret {
+                from, to { border-color: transparent }
+                50% { border-color: var(--primary-color) }
+            }
+            
+            .glow-effect {
+                animation: glow 1.5s ease-in-out infinite alternate;
+            }
+            
+            @keyframes glow {
+                from { text-shadow: 0 0 5px rgba(0, 255, 157, 0.5); }
+                to { text-shadow: 0 0 20px rgba(0, 255, 157, 0.8); }
+            }
+        `;
+        document.head.appendChild(toastStyle);
+        
+        // Initialize particles.js
+        document.addEventListener('DOMContentLoaded', function() {
+            initParticles();
+            loadWords();
+        });
+        
+        function initParticles() {
+            particlesJS('particles-js', {
+                particles: {
+                    number: { value: 80, density: { enable: true, value_area: 800 } },
+                    color: { value: '#00ff9d' },
+                    shape: { type: 'circle' },
+                    opacity: { value: 0.5, random: true, anim: { enable: true, speed: 1, opacity_min: 0.1, sync: false } },
+                    size: { value: 3, random: true, anim: { enable: true, speed: 2, size_min: 0.1, sync: false } },
+                    line_linked: { enable: true, distance: 150, color: '#00ff9d', opacity: 0.2, width: 1 },
+                    move: { enable: true, speed: 1, direction: 'none', random: true, straight: false, out_mode: 'out', bounce: false }
+                },
+                interactivity: {
+                    detect_on: 'canvas',
+                    events: { onhover: { enable: true, mode: 'grab' }, resize: true },
+                    modes: { grab: { distance: 140, line_linked: { opacity: 0.5 } } }
+                },
+                retina_detect: true
+            });
+        }
+        
+        function createParticleBurst() {
+            const inputArea = document.querySelector('.input-area');
+            const rect = inputArea.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: fixed;
+                    width: 8px;
+                    height: 8px;
+                    background: var(--primary-color);
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 1000;
+                `;
+                document.body.appendChild(particle);
+                
+                const angle = (i / 20) * Math.PI * 2;
+                const velocity = 2 + Math.random() * 2;
+                const dx = Math.cos(angle) * velocity;
+                const dy = Math.sin(angle) * velocity;
+                
+                gsap.fromTo(particle,
+                    { x: centerX, y: centerY, scale: 1, opacity: 1 },
+                    { duration: 1 + Math.random(), x: centerX + dx * 50, y: centerY + dy * 50, scale: 0, opacity: 0, ease: 'power2.out', onComplete: () => particle.remove() }
+                );
+            }
+        }
+        
+        // Add typing effect to the header
+        document.addEventListener('DOMContentLoaded', function() {
+            const header = document.querySelector('.header h1');
+            header.classList.add('glow-effect');
+            
+            const lead = document.querySelector('.header .lead');
+            lead.classList.add('typing-effect');
+            lead.style.width = '0';
+            
+            setTimeout(() => {
+                gsap.to(lead, { width: '100%', duration: 3, ease: 'steps(40)' });
+            }, 1000);
+        });
+        
         // Initialize word storage
         let words = JSON.parse(localStorage.getItem('roots-words')) || {};
         let totalSubmissions = Object.values(words).reduce((a, b) => a + b, 0);
@@ -398,14 +481,38 @@
                 // Update visualization
                 updateWordCloud();
                 
-                // Show success message
-                const random = Math.floor(Math.random() * 3);
+                // Show success message with animation
+                const random = Math.floor(Math.random() * 5);
                 const messages = [
                     `"${word}" has been planted in the AI garden!`,
                     `"${word}" is now growing in the AI consciousness!`,
-                    `"${word}" will blossom in future AI understanding!`
+                    `"${word}" will blossom in future AI understanding!`,
+                    `"${word}" is taking root in the digital soil!`,
+                    `"${word}" has been added to the collective intelligence!`
                 ];
-                alert(messages[random]);
+                
+                // Create a toast notification instead of alert
+                const toast = document.createElement('div');
+                toast.className = 'toast-notification';
+                toast.textContent = messages[random];
+                document.body.appendChild(toast);
+                
+                // Animate the toast
+                gsap.fromTo(toast, 
+                    { y: 50, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' }
+                );
+                
+                // Create particle burst effect
+                createParticleBurst();
+                
+                // Remove the toast after 3 seconds
+                setTimeout(() => {
+                    gsap.to(toast, {
+                        y: -50, opacity: 0, duration: 0.5, ease: 'power2.in',
+                        onComplete: () => toast.remove()
+                    });
+                }, 3000);
             }
         });
         
